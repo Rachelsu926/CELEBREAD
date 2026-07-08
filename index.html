@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CELEBREAD 職人歐式酸麵包團購系統</title>
+    <title>CELEBREAD 職人歐式酸種麵包團購</title>
     <style>
         :root {
             --bg-color: #f7f3ed;
@@ -28,12 +28,10 @@
         .panel { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; position: relative; }
         .info-box { background: var(--primary-light); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 20px; font-size: 14px; }
         
-        /* 📈 限量進度條樣式 */
         .limit-box { background: #fff5eb; border: 1px solid #fed7aa; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
         .progress-bar-bg { background: #e5e7eb; border-radius: 9999px; height: 12px; width: 100%; margin-top: 6px; overflow: hidden; }
         .progress-bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.3s ease; }
         
-        /* 🔒 表單截止覆蓋層 */
         .soldout-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(247, 243, 237, 0.9); z-index: 10; border-radius: 12px; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
         .soldout-title { font-size: 28px; color: var(--danger); font-weight: bold; margin-bottom: 10px; }
 
@@ -79,7 +77,7 @@
 
 <div class="container">
     <header>
-        <h1>🥖 CELEBREAD 職人歐包團購表單 🥐</h1>
+        <h1>🥖 CELEBREAD 職人歐式酸種麵包團購表單 🥐</h1>
         <p>純手工揉製、風味濃郁的高質感歐式酸麵包特開此團！</p>
     </header>
 
@@ -107,7 +105,7 @@
         <div class="search-box">
             <h2>🔍 查詢/修改訂單</h2>
             <div class="search-input-group">
-                <input type="text" id="query-input" class="form-control" placeholder="請輸入您填單時的「姓名」或「電話號碼/分機」">
+                <input type="text" id="query-input" class="form-control" placeholder="請輸入姓名關鍵字（輸入一個字也可查）或電話分機">
                 <button class="btn-search" onclick="searchMyOrder()">查詢</button>
             </div>
             <div id="search-result" class="search-result-area"></div>
@@ -160,8 +158,8 @@
 
 <script>
     const FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
-    const MAX_LIMIT = 50;  // 🎯 在這裡設定此團的「總顆數上限」
-    const ADMIN_PASSWORD = "666"; // 🔒 在這裡設定你的「主揪登入密碼」
+    const MAX_LIMIT = 50;  
+    const ADMIN_PASSWORD = "666"; 
 
     let currentEditOrderId = null; 
     let globalOrdersCache = {}; 
@@ -171,7 +169,6 @@
     const prices = { country: 280, farmer: 280, walnut: 300 };
     const names = { country: "鄉村 Sourdough", farmer: "農夫 Choice", walnut: "核桃 Walnut" };
 
-    // 網頁一打開，立刻去撈目前總共被訂了幾顆，更新進度條
     window.onload = function() {
         refreshGlobalCount();
     };
@@ -194,11 +191,9 @@
             currentGlobalTotalCount = totalCount;
             document.getElementById('current-total-baked').innerText = totalCount;
             
-            // 更新進度條
             let percent = Math.min((totalCount / MAX_LIMIT) * 100, 100);
             document.getElementById('progress-fill').style.width = percent + '%';
 
-            // ⚠️ 判斷如果爆單了，且目前「不是」在改單狀態，就鎖死表單
             if (totalCount >= MAX_LIMIT && !currentEditOrderId) {
                 document.getElementById('soldout-layer').style.display = 'flex';
             } else {
@@ -228,10 +223,11 @@
         document.getElementById('transfer-info').style.display = (method === '轉帳') ? 'block' : 'none';
     }
 
+    // 🔍 升級版：支援姓名關鍵字模糊搜尋
     function searchMyOrder() {
         const keyword = document.getElementById('query-input').value.trim();
         const resultArea = document.getElementById('search-result');
-        if (!keyword) { alert('請輸入姓名或電話號碼以供查詢！'); return; }
+        if (!keyword) { alert('請輸入姓名關鍵字或電話號碼以供查詢！'); return; }
         
         resultArea.style.display = 'block';
         resultArea.innerHTML = '🔍 正在雲端搜尋您的訂單中...';
@@ -239,24 +235,28 @@
         fetch(`${FIREBASE_URL}/orders.json`)
         .then(res => res.json())
         .then(data => {
-            if (!data) { resultArea.innerHTML = '📭 目前雲端無資料。'; return; }
+            if (!data) { resultArea.innerHTML = '📭 目前雲端無任何訂單紀錄。'; return; }
             globalOrdersCache = data; 
             let matchedOrders = [];
             const keywordPure = keyword.replace(/[^0-9a-zA-Z\u4e00-\u9fa5]/g, ''); 
 
             for (let id in data) {
                 let ord = data[id];
-                if ((ord.name && ord.name.trim() === keyword) || (keywordPure && ord.phone && ord.phone.replace(/[^0-9]/g, '').includes(keywordPure))) {
+                const dbName = ord.name ? ord.name.trim() : '';
+                const dbPhonePure = ord.phone ? ord.phone.replace(/[^0-9]/g, '') : '';
+
+                // ✅ 關鍵修改：只要資料庫的名字包含輸入的關鍵字 (dbName.includes)，就抓出來！
+                if (dbName.includes(keyword) || (keywordPure && dbPhonePure.includes(keywordPure))) {
                     matchedOrders.push({ id: id, data: ord });
                 }
             }
 
             if (matchedOrders.length === 0) {
-                resultArea.innerHTML = '❌ 找不到相符訂單。';
+                resultArea.innerHTML = `❌ 找不到與「${keyword}」相符的訂單。`;
                 return;
             }
 
-            let html = `<b>✨ 找到以下填單紀錄：</b>`;
+            let html = `<b>✨ 幫您找到以下相關紀錄：</b>`;
             matchedOrders.forEach(item => {
                 let ord = item.data;
                 let id = item.id;
@@ -270,19 +270,19 @@
     function verifyAndLoadOrder(id) {
         const ord = globalOrdersCache[id];
         if (!ord) return;
-        const userInputCode = prompt(`【身份核對】請輸入此筆訂單的「電話後三碼」或「分機」：`);
+        const userInputCode = prompt(`【安全身份核對】\n請輸入此筆訂單的「電話後三碼」或「分機號碼」：`);
         if (!userInputCode) return;
         const dbPhonePure = ord.phone ? ord.phone.replace(/[^0-9]/g, '') : '';
         if (dbPhonePure.endsWith(userInputCode.trim())) {
             loadOrderToForm(id, ord);
         } else {
-            alert("❌ 驗證失敗！");
+            alert("❌ 身份核對失敗，輸入的後三碼不正確！");
         }
     }
 
     function loadOrderToForm(id, ord) {
         currentEditOrderId = id; 
-        document.getElementById('soldout-layer').style.display = 'none'; // 修改狀態下暫時解鎖，允許覆蓋
+        document.getElementById('soldout-layer').style.display = 'none'; 
         document.getElementById('edit-mode-alert').style.display = 'block';
         document.getElementById('submit-btn').innerText = '💾 確認更新訂單（覆蓋原訂單）';
         document.getElementById('submit-btn').style.background = 'var(--accent)';
@@ -303,7 +303,7 @@
         document.getElementById('submit-btn').innerText = '確認送出訂單';
         document.getElementById('submit-btn').style.background = 'var(--success)';
         clearForm();
-        refreshGlobalCount(); // 取消後重新檢查是否該鎖死表單
+        refreshGlobalCount(); 
     }
 
     function clearForm() {
@@ -335,9 +335,8 @@
             }
         }
 
-        // 防呆：如果是全新單，且加上去會超過上限，阻擋！
         if (!currentEditOrderId && (currentGlobalTotalCount + userOrderCount > MAX_LIMIT)) {
-            alert(`⚠️ 抱歉！剛剛有人搶先下單了，您這筆訂單的數量 (${userOrderCount} 顆) 會讓總數超過系統上限，請減少數量再試一次！`);
+            alert(`⚠️ 抱歉！總數量 (${userOrderCount} 顆) 會讓本團超過上限，請減少數量再試一次！`);
             refreshGlobalCount();
             return;
         }
@@ -354,14 +353,13 @@
         })
         .then(response => {
             if(!response.ok) throw new Error();
-            alert('🎉 訂單處理成功！');
+            alert('🎉 訂單處理成功！已同步至雲端。');
             cancelEditMode();
             refreshGlobalCount();
             loadAdminOrders();
         });
     }
 
-    /* 🔒 後台安全密碼鎖機制 */
     function toggleAdminPanel() {
         const panel = document.getElementById('admin-panel');
         if (panel.style.display === 'none') {
@@ -370,7 +368,7 @@
                 panel.style.display = 'block';
                 loadAdminOrders();
             } else if (pwd !== null) {
-                alert("❌ 密碼錯誤，您不是合法主揪喔！");
+                alert("❌ 密碼錯誤！");
             }
         } else {
             panel.style.display = 'none';
@@ -411,7 +409,7 @@
     }
 
     function deleteOrder(id, name) {
-        if (confirm(`⚠️ 確定刪除 ${name} 的訂den嗎？`)) {
+        if (confirm(`⚠️ 確定要徹底刪除 ${name} 的這筆訂單嗎？`)) {
             fetch(`${FIREBASE_URL}/orders/${id}.json`, { method: 'DELETE' }).then(() => { loadAdminOrders(); refreshGlobalCount(); });
         }
     }
