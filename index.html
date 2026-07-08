@@ -66,6 +66,8 @@
     <header>
         <h1>🥖 CELEBREAD 職人歐包團購表單 🥐</h1>
         <p>純手工揉製、風味濃郁的高質感歐式酸麵包特開此團！</p>
+        🛒 口味選擇障礙看這裡： 建議直接點進 ✨ CELEBREAD 官方 IG 傳送門</b> <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">點此進入 CELEBREAD 官方 IG 瀏覽美味美照 ↗</a>
+        </div>，看看超厲害的剖面大氣孔和爆漿配料照片，挑好命定款就趕快在下方填單吧！
     </header>
 
     <div id="client-panel" class="panel">
@@ -73,20 +75,19 @@
             📌 <b>團購說明：</b><br>
             • 結單時間：2026/7/13 下午3:00，滿額即提前結單，請儘速填寫。<br>
             • 取貨地點：辦公室自取。<br>
-            • 備註：此表單所有品項皆為<b>「整顆 (Loaf)」</b>。
+            • 備註：此表單所有品項皆為<b>「整顆 (Loaf)」</b>。<br>
+            👉 <b>官方網站：</b> <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">點此查看 CELEBREAD 官方 IG 瀏覽美照 ↗</a>
         </div>
 
-        <!-- 🔍 團員訂單自主查詢/修改區塊 -->
         <div class="search-box">
-            <h2>🔍 查詢/修改訂單：輸入電話號碼</h2>
+            <h2>🔍 查詢/修改訂單</h2>
             <div class="search-input-group">
-                <input type="text" id="query-phone" class="form-control" placeholder="請輸入您填單時的完整電話（範例：0912345678）">
+                <input type="text" id="query-input" class="form-control" placeholder="請輸入您填單時的「姓名」或「電話號碼/分機」">
                 <button class="btn-search" onclick="searchMyOrder()">查詢</button>
             </div>
             <div id="search-result" class="search-result-area"></div>
         </div>
 
-        <!-- 💡 編輯模式狀態提示列 -->
         <div id="edit-mode-alert">
             ⚠️ 正在修改原本的訂單... <button class="btn-cancel-edit" onclick="cancelEditMode()">取消修改</button>
         </div>
@@ -97,14 +98,13 @@
         </div>
 
         <div class="form-group">
-            <label for="phone">電話號碼 / 聯絡電話 (必填)</label>
-            <input type="text" id="phone" class="form-control" placeholder="請輸入聯絡電話（請填寫與查詢時一致的完整號碼）">
+            <label for="phone">電話號碼 / 聯絡分機 (必填)</label>
+            <input type="text" id="phone" class="form-control" placeholder="請輸入完整的電話號碼或辦公室分機">
         </div>
 
         <div class="form-group">
             <label>🍞 選擇歐包口味與數量</label>
             
-            <!-- 品項列表 -->
             <div class="menu-item" data-id="country"><div class="item-info"><h3>鄉村 Country Sourdough</h3><p>經典純粹的招牌酸麵包風味</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 280</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('country', -1)">-</button><span id="qty-country" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('country', 1)">+</button></div></div></div>
             <div class="menu-item" data-id="farmer"><div class="item-info"><h3>農夫 Farmer’s Choice</h3><p>職人推薦，獨特麥香與Q彈口感</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 280</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('farmer', -1)">-</button><span id="qty-farmer" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('farmer', 1)">+</button></div></div></div>
             <div class="menu-item" data-id="walnut"><div class="item-info"><h3>核桃 Walnut</h3><p>豐富核桃堅果香氣與酸種完美融合</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 300</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('walnut', -1)">-</button><span id="qty-walnut" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('walnut', 1)">+</button></div></div></div>
@@ -148,7 +148,6 @@
 <script>
     const FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
 
-    // 全域變數
     let currentEditOrderId = null; 
     let globalOrdersCache = {}; 
 
@@ -181,35 +180,15 @@
         document.getElementById('transfer-info').style.display = (method === '轉帳') ? 'block' : 'none';
     }
 
-    // 🔍 升級版：電話後三碼安全驗證（既簡單又安全）
+    // 🔍 終極完美查詢邏輯：支援姓名或電話，解鎖改單時驗證「電話後三碼或分機號碼」
     function searchMyOrder() {
-        const inputPhone = document.getElementById('query-phone').value.trim();
+        const keyword = document.getElementById('query-input').value.trim();
         const resultArea = document.getElementById('search-result');
         
-        if (!inputPhone) { alert('請輸入您填單時的聯絡電話以供查詢！'); return; }
-        if (inputPhone.length < 3) { alert('請輸入正確且完整的電話號碼！'); return; }
-        
-        // 🔒 彈出安全核對視窗，要求輸入後三碼
-        const lastThreeDigits = prompt("【安全身分核對】\n為了防範誤改他人訂單，請輸入此號碼的「後三碼數字」：");
-        if (!lastThreeDigits || lastThreeDigits.trim() === "") {
-            alert("必須輸入正確的後三碼才能進行查詢與修改喔！");
-            resultArea.style.display = 'none';
-            return;
-        }
-        
-        const targetCode = lastThreeDigits.trim();
-        // 取出使用者在查詢框輸入的電話的最後三碼，先跟使用者自己打的比對，做第一線防呆
-        const inputPhonePure = inputPhone.replace(/[^0-9]/g, '');
-        const inputLastThree = inputPhonePure.slice(-3);
-        
-        if (targetCode !== inputLastThree) {
-            alert("❌ 驗證失敗：您輸入的後三碼與查詢的電話號碼不符！");
-            resultArea.style.display = 'none';
-            return;
-        }
+        if (!keyword) { alert('請輸入姓名或電話號碼以供查詢！'); return; }
         
         resultArea.style.display = 'block';
-        resultArea.innerHTML = '🔍 正在進行安全身份核對中...';
+        resultArea.innerHTML = '🔍 正在雲端搜尋您的訂單中...';
 
         fetch(`${FIREBASE_URL}/orders.json`)
         .then(res => res.json())
@@ -220,52 +199,86 @@
             }
             globalOrdersCache = data; 
 
-            let html = `<div style="font-weight:bold; margin-bottom:8px; color:var(--primary);">✨ 身分核對成功！幫您找到以下填單紀錄：</div>`;
-            let count = 0;
+            let matchedOrders = [];
+            const keywordPure = keyword.replace(/[^0-9a-zA-Z\u4e00-\u9fa5]/g, ''); // 純化關鍵字
 
             for (let id in data) {
                 let ord = data[id];
-                
-                // 唯有資料庫內存的電話，與輸入的電話「完全一致」，才放行
+                const dbName = ord.name ? ord.name.trim() : '';
                 const dbPhonePure = ord.phone ? ord.phone.replace(/[^0-9]/g, '') : '';
-                
-                if (dbPhonePure === inputPhonePure) {
-                    count++;
-                    const statusColor = ord.status === '已確認' ? 'var(--success)' : 'red';
-                    
-                    let editBtnHtml = '';
-                    if (ord.status === '已確認') {
-                        editBtnHtml = `<br><span style="color:var(--text-muted); font-size:12px;">💡 此訂單主揪已核對確認，如需修改請直接私訊主揪。</span>`;
-                    } else {
-                        editBtnHtml = `<br><button class="btn-edit-order" onclick="loadOrderToForm('${id}')">✏️ 修改此筆訂單</button>`;
-                    }
 
-                    html += `
-                        <div class="search-item-row">
-                            🟢 <b>姓名：</b>${ord.name} <br>
-                            🍞 <b>明細：</b><span style="color:#555;">${ord.items}</span><br>
-                            💰 <b>金額：</b>NT$ ${ord.total} 元 (${ord.payment})<br>
-                            📌 <b>對帳狀態：</b><b style="color:${statusColor};">${ord.status || '未核對'}</b>
-                            ${editBtnHtml}
-                        </div>
-                    `;
+                // 彈性檢查：不論是名字相同，還是電話包含關鍵字，都抓出來
+                if (dbName === keyword || (keywordPure && dbPhonePure.includes(keywordPure))) {
+                    matchedOrders.push({ id: id, data: ord });
                 }
             }
 
-            if (count === 0) {
-                resultArea.innerHTML = `<span style="color:red;">❌ 找不到與此電話號碼完全符合的訂單，請確認號碼是否輸入正確。</span>`;
-            } else {
-                resultArea.innerHTML = html;
+            if (matchedOrders.length === 0) {
+                resultArea.innerHTML = `<span style="color:red;">❌ 找不到與「${keyword}」相符的訂單，請檢查字元是否輸入正確。</span>`;
+                return;
             }
+
+            // 抓到資料後，開始生成列表
+            let html = `<div style="font-weight:bold; margin-bottom:8px; color:var(--primary);">✨ 幫您找到以下填單紀錄：</div>`;
+            
+            matchedOrders.forEach(item => {
+                let ord = item.data;
+                let id = item.id;
+                const statusColor = ord.status === '已確認' ? 'var(--success)' : 'red';
+                
+                let editBtnHtml = '';
+                if (ord.status === '已確認') {
+                    editBtnHtml = `<br><span style="color:var(--text-muted); font-size:12px;">💡 此訂單主揪已核對確認，如需修改請直接私訊主揪。</span>`;
+                } else {
+                    // 點擊修改時，觸發安全密碼驗證機制
+                    editBtnHtml = `<br><button class="btn-edit-order" onclick="verifyAndLoadOrder('${id}')">✏️ 修改此筆訂單</button>`;
+                }
+
+                html += `
+                    <div class="search-item-row">
+                        🟢 <b>姓名：</b>${ord.name} <br>
+                        🍞 <b>明細：</b><span style="color:#555;">${ord.items}</span><br>
+                        💰 <b>金額：</b>NT$ ${ord.total} 元 (${ord.payment})<br>
+                        📌 <b>對帳狀態：</b><b style="color:${statusColor};">${ord.status || '未核對'}</b>
+                        ${editBtnHtml}
+                    </div>
+                `;
+            });
+
+            resultArea.innerHTML = html;
         })
         .catch(() => { resultArea.innerHTML = '❌ 查詢時連線出錯，請稍後再試。'; });
     }
 
-    // ✏️ 將被選中的訂單帶入下方的輸入表單中
-    function loadOrderToForm(id) {
+    // 🔒 點擊修改按鈕時的「暗號驗證防線」
+    function verifyAndLoadOrder(id) {
         const ord = globalOrdersCache[id];
         if (!ord) return;
 
+        // 取得該筆訂單在資料庫中純數字的電話號碼
+        const dbPhonePure = ord.phone ? ord.phone.replace(/[^0-9]/g, '') : '';
+        
+        // 要求團員輸入密碼（後三碼或完整分機）
+        const userInputCode = prompt(`【安全身份核對】\n為了防範誤改他人訂單，請輸入此筆訂單的「電話後三碼」或「分機號碼」：`);
+        
+        if (!userInputCode || userInputCode.trim() === "") {
+            alert("必須輸入正確的暗號才能修改訂單喔！");
+            return;
+        }
+
+        const inputCodePure = userInputCode.trim().replace(/[^0-9]/g, '');
+
+        // 檢查方式：輸入的數字必須是該筆電話的「尾數」
+        if (dbPhonePure.endsWith(inputCodePure) && inputCodePure.length >= 2) {
+            // 驗證成功，放行填入表單
+            loadOrderToForm(id, ord);
+        } else {
+            alert("❌ 驗證失敗：您輸入的後三碼/分機號碼不正確，無法修改他人訂單！");
+        }
+    }
+
+    // ✏️ 將被選中的訂單帶入下方的輸入表單中
+    function loadOrderToForm(id, ord) {
         currentEditOrderId = id; 
         
         document.getElementById('edit-mode-alert').style.display = 'block';
@@ -363,7 +376,7 @@
                 alert(currentEditOrderId ? '🎉 您的訂單已在雲端成功更新！LINE格式已複製，您可以重新貼回群組！' : '🎉 訂單已成功送出並同步至雲端！已自動複製 LINE 格式，您可以貼回群組告知主揪！');
                 cancelEditMode(); 
                 document.getElementById('search-result').style.display = 'none'; 
-                document.getElementById('query-phone').value = '';
+                document.getElementById('query-input').value = '';
             });
         })
         .catch(err => alert('系統連線失敗，請檢查資料庫網址設定！'));
