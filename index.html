@@ -22,7 +22,8 @@
         .container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
         header { text-align: center; margin-bottom: 30px; background: var(--card-bg); padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         header h1 { color: var(--primary); font-size: 24px; margin-bottom: 10px; }
-        header p { color: var(--text-muted); font-size: 14px; }
+        header p { color: var(--text-muted); font-size: 14px; margin-bottom: 12px; }
+        .header-hint { font-size: 13px; color: var(--text-main); background: #faf6ee; padding: 8px 12px; border-radius: 6px; display: inline-block; border: 1px solid #eee8dd; }
         .panel { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; }
         .info-box { background: var(--primary-light); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 20px; font-size: 14px; }
         
@@ -66,8 +67,9 @@
     <header>
         <h1>🥖 CELEBREAD 職人歐包團購表單 🥐</h1>
         <p>純手工揉製、風味濃郁的高質感歐式酸麵包特開此團！</p>
-        🛒 口味選擇障礙看這裡： 建議直接點進 ✨ CELEBREAD 官方 IG 傳送門</b> <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">點此進入 CELEBREAD 官方 IG 瀏覽美味美照 ↗</a>
-        </div>，看看超厲害的剖面大氣孔和爆漿配料照片，挑好命定款就趕快在下方填單吧！
+        <div class="header-hint">
+            🛒 <b>口味選擇障礙看這裡：</b> 建議直接點進 <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">✨ CELEBREAD 官方 IG 專頁 ↗</a>，瀏覽超厲害的剖面大氣孔與配料照片，挑好命定款再填單吧！
+        </div>
     </header>
 
     <div id="client-panel" class="panel">
@@ -76,7 +78,7 @@
             • 結單時間：2026/7/13 下午3:00，滿額即提前結單，請儘速填寫。<br>
             • 取貨地點：辦公室自取。<br>
             • 備註：此表單所有品項皆為<b>「整顆 (Loaf)」</b>。<br>
-            👉 <b>官方網站：</b> <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">點此查看 CELEBREAD 官方 IG 瀏覽美照 ↗</a>
+            👉 <b>官方網站連結：</b> <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">點此進入 CELEBREAD 官方 IG 瀏覽美照 ↗</a>
         </div>
 
         <div class="search-box">
@@ -180,7 +182,6 @@
         document.getElementById('transfer-info').style.display = (method === '轉帳') ? 'block' : 'none';
     }
 
-    // 🔍 終極完美查詢邏輯：支援姓名或電話，解鎖改單時驗證「電話後三碼或分機號碼」
     function searchMyOrder() {
         const keyword = document.getElementById('query-input').value.trim();
         const resultArea = document.getElementById('search-result');
@@ -200,14 +201,13 @@
             globalOrdersCache = data; 
 
             let matchedOrders = [];
-            const keywordPure = keyword.replace(/[^0-9a-zA-Z\u4e00-\u9fa5]/g, ''); // 純化關鍵字
+            const keywordPure = keyword.replace(/[^0-9a-zA-Z\u4e00-\u9fa5]/g, ''); 
 
             for (let id in data) {
                 let ord = data[id];
                 const dbName = ord.name ? ord.name.trim() : '';
                 const dbPhonePure = ord.phone ? ord.phone.replace(/[^0-9]/g, '') : '';
 
-                // 彈性檢查：不論是名字相同，還是電話包含關鍵字，都抓出來
                 if (dbName === keyword || (keywordPure && dbPhonePure.includes(keywordPure))) {
                     matchedOrders.push({ id: id, data: ord });
                 }
@@ -218,7 +218,6 @@
                 return;
             }
 
-            // 抓到資料後，開始生成列表
             let html = `<div style="font-weight:bold; margin-bottom:8px; color:var(--primary);">✨ 幫您找到以下填單紀錄：</div>`;
             
             matchedOrders.forEach(item => {
@@ -230,7 +229,6 @@
                 if (ord.status === '已確認') {
                     editBtnHtml = `<br><span style="color:var(--text-muted); font-size:12px;">💡 此訂單主揪已核對確認，如需修改請直接私訊主揪。</span>`;
                 } else {
-                    // 點擊修改時，觸發安全密碼驗證機制
                     editBtnHtml = `<br><button class="btn-edit-order" onclick="verifyAndLoadOrder('${id}')">✏️ 修改此筆訂單</button>`;
                 }
 
@@ -250,15 +248,11 @@
         .catch(() => { resultArea.innerHTML = '❌ 查詢時連線出錯，請稍後再試。'; });
     }
 
-    // 🔒 點擊修改按鈕時的「暗號驗證防線」
     function verifyAndLoadOrder(id) {
         const ord = globalOrdersCache[id];
         if (!ord) return;
 
-        // 取得該筆訂單在資料庫中純數字的電話號碼
         const dbPhonePure = ord.phone ? ord.phone.replace(/[^0-9]/g, '') : '';
-        
-        // 要求團員輸入密碼（後三碼或完整分機）
         const userInputCode = prompt(`【安全身份核對】\n為了防範誤改他人訂單，請輸入此筆訂單的「電話後三碼」或「分機號碼」：`);
         
         if (!userInputCode || userInputCode.trim() === "") {
@@ -268,16 +262,13 @@
 
         const inputCodePure = userInputCode.trim().replace(/[^0-9]/g, '');
 
-        // 檢查方式：輸入的數字必須是該筆電話的「尾數」
         if (dbPhonePure.endsWith(inputCodePure) && inputCodePure.length >= 2) {
-            // 驗證成功，放行填入表單
             loadOrderToForm(id, ord);
         } else {
             alert("❌ 驗證失敗：您輸入的後三碼/分機號碼不正確，無法修改他人訂單！");
         }
     }
 
-    // ✏️ 將被選中的訂單帶入下方的輸入表單中
     function loadOrderToForm(id, ord) {
         currentEditOrderId = id; 
         
