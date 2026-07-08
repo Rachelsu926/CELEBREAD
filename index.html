@@ -128,4 +128,235 @@
                     <div class="quantity-control">
                         <button class="qty-btn" onclick="changeQty('baguette', -1)">-</button>
                         <span id="qty-baguette" class="qty-val">0</span>
-                        <button class
+                        <button class="qty-btn" onclick="changeQty('baguette', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" data-id="olive">
+                <div class="item-info">
+                    <h3>普羅旺斯橄欖 Olive with Herbes de Provence</h3>
+                    <p>濃郁地中海香草與鹹香橄欖風味</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="item-price">NT$ 300</span>
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="changeQty('olive', -1)">-</button>
+                        <span id="qty-olive" class="qty-val">0</span>
+                        <button class="qty-btn" onclick="changeQty('olive', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" data-id="jalapeno">
+                <div class="item-info">
+                    <h3>辣椒起司 Jalapeño & Cheddar</h3>
+                    <p>微辣墨西哥椒與切達起司的絕妙美味</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="item-price">NT$ 300</span>
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="changeQty('jalapeno', -1)">-</button>
+                        <span id="qty-jalapeno" class="qty-val">0</span>
+                        <button class="qty-btn" onclick="changeQty('jalapeno', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" data-id="chocolate">
+                <div class="item-info">
+                    <h3>巧克力香橙 Chocolate with Candied Orange</h3>
+                    <p>苦甜巧克力伴隨蜜漬香橙皮的優雅層次</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="item-price">NT$ 300</span>
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="changeQty('chocolate', -1)">-</button>
+                        <span id="qty-chocolate" class="qty-val">0</span>
+                        <button class="qty-btn" onclick="changeQty('chocolate', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" data-id="cranberry">
+                <div class="item-info">
+                    <h3>胡桃蔓越莓 Cranberry & Pecan</h3>
+                    <p>酸甜蔓越莓果乾與脆口胡桃</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="item-price">NT$ 300</span>
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="changeQty('cranberry', -1)">-</button>
+                        <span id="qty-cranberry" class="qty-val">0</span>
+                        <button class="qty-btn" onclick="changeQty('cranberry', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" data-id="edamame">
+                <div class="item-info">
+                    <h3>毛豆乾酪 Edamame & Grana Padano</h3>
+                    <p>鮮美毛豆仁與頂級帕達諾乾酪交織</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="item-price">NT$ 320</span>
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="changeQty('edamame', -1)">-</button>
+                        <span id="qty-edamame" class="qty-val">0</span>
+                        <button class="qty-btn" onclick="changeQty('edamame', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" data-id="napoli">
+                <div class="item-info">
+                    <h3>拿坡里 Pane di Napoli</h3>
+                    <p>充滿南義風情的獨特風味經典呈現</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="item-price">NT$ 350</span>
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="changeQty('napoli', -1)">-</button>
+                        <span id="qty-napoli" class="qty-val">0</span>
+                        <button class="qty-btn" onclick="changeQty('napoli', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>💳 付款方式</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="payment" value="轉帳" checked onclick="togglePayFields('轉帳')"> 銀行轉帳
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="payment" value="現金" onclick="togglePayFields('現金')"> 面交付現
+                </label>
+            </div>
+        </div>
+
+        <div id="transfer-info" class="form-group">
+            <div style="background: #fdfaf2; padding: 12px; border-radius: 6px; font-size: 14px; border: 1px dashed var(--accent); margin-bottom: 10px;">
+                💰 <b>主揪轉帳帳號：</b> 國泰世華 (013) 205-506165-556
+            </div>
+            <label for="paycode">匯款帳號後五碼 (必填)</label>
+            <input type="text" id="paycode" class="form-control" placeholder="請輸入您的帳號後五碼">
+        </div>
+
+        <div class="summary-box">
+            總計金額： NT$ <span id="total-amount">0</span> 元
+        </div>
+
+        <button class="btn-submit" onclick="submitOrder()">確認送出訂單（並複製 LINE 點單格式）</button>
+    </div>
+</div>
+
+<script>
+    const FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
+
+    const orderData = {
+        country: 0, farmer: 0, walnut: 0, baguette: 0, olive: 0, jalapeno: 0, chocolate: 0, cranberry: 0, edamame: 0, napoli: 0
+    };
+    const prices = {
+        country: 280, farmer: 280, walnut: 300, baguette: 140, olive: 300, jalapeno: 300, chocolate: 300, cranberry: 300, edamame: 320, napoli: 350
+    };
+    const names = {
+        country: "鄉村 Country Sourdough",
+        farmer: "農夫 Farmer’s Choice",
+        walnut: "核桃 Walnut",
+        baguette: "酸種法棍 Baguette au Levain",
+        olive: "普羅旺斯橄欖 Olive",
+        jalapeno: "辣椒起司 Jalapeño & Cheddar",
+        chocolate: "巧克力香橙 Chocolate",
+        cranberry: "胡桃蔓越莓 Cranberry & Pecan",
+        edamame: "毛豆乾酪 Edamame & Grana Padano",
+        napoli: "拿坡里 Pane di Napoli"
+    };
+
+    function changeQty(id, delta) {
+        let current = orderData[id];
+        let next = current + delta;
+        if(next >= 0) {
+            orderData[id] = next;
+            document.getElementById('qty-' + id).innerText = next;
+            calculateTotal();
+        }
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        for(let key in orderData) {
+            total += orderData[key] * prices[key];
+        }
+        document.getElementById('total-amount').innerText = total;
+        return total;
+    }
+
+    function togglePayFields(method) {
+        const field = document.getElementById('transfer-info');
+        field.style.display = (method === '轉帳') ? 'block' : 'none';
+    }
+
+    function submitOrder() {
+        const name = document.getElementById('username').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const payment = document.querySelector('input[name="payment"]:checked').value;
+        const paycode = document.getElementById('paycode').value.trim();
+        const total = calculateTotal();
+
+        if(!name || !phone) { alert('請填寫姓名與聯絡電話！'); return; }
+        if(total === 0) { alert('請至少選擇一個品項！'); return; }
+        if(payment === '轉帳' && !paycode) { alert('請輸入匯款帳號後五碼以利對帳！'); return; }
+
+        let itemsSummary = [];
+        let itemsObject = {};
+        for(let key in orderData) {
+            if(orderData[key] > 0) {
+                itemsSummary.push(`${names[key]} x ${orderData[key]}`);
+                itemsObject[key] = orderData[key];
+            }
+        }
+
+        const orderId = Date.now();
+        const newOrder = {
+            id: orderId,
+            name: name,
+            phone: phone,
+            items: itemsSummary.join(', '),
+            itemsObj: itemsObject,
+            total: total,
+            payment: payment,
+            paycode: payment === '轉帳' ? paycode : '面交現付',
+            status: '未核對'
+        };
+
+        fetch(`${FIREBASE_URL}/orders/${orderId}.json`, {
+            method: 'PUT',
+            body: JSON.stringify(newOrder)
+        })
+        .then(response => {
+            if(!response.ok) throw new Error();
+            
+            let lineText = `【CELEBREAD 團購點單確認】\n👤 跟團姓名：${name}\n📞 聯絡電話：${phone}\n🍞 訂購明細：\n   ${itemsSummary.join('\n   ')}\n💳 付款方式：${payment}\n`;
+            if(payment === '轉帳') lineText += `🔢 後五碼：${paycode}\n`;
+            lineText += `💰 總金額：NT$ ${total} 元\n------------------------`;
+
+            navigator.clipboard.writeText(lineText).then(() => {
+                alert('🎉 訂單已成功送出並同步至雲端！已自動複製 LINE 格式，您可以貼回群組告知主揪！');
+                document.getElementById('username').value = '';
+                document.getElementById('phone').value = '';
+                document.getElementById('paycode').value = '';
+                for(let key in orderData) {
+                    orderData[key] = 0;
+                    document.getElementById('qty-' + key).innerText = 0;
+                }
+                calculateTotal();
+            });
+        })
+        .catch(err => alert('系統連線失敗，請檢查資料庫網址設定！'));
+    }
+</script>
+
+</body>
+</html>
