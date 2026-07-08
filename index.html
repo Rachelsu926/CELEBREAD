@@ -26,14 +26,19 @@
         .panel { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; }
         .info-box { background: var(--primary-light); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 20px; font-size: 14px; }
         
-        /* 🔍 查詢區塊樣式 */
+        /* 🔍 查詢與修改區塊樣式 */
         .search-box { background: #fdfbf7; border: 1px dashed var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 25px; }
         .search-box h2 { font-size: 15px; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
         .search-input-group { display: flex; gap: 10px; }
         .btn-search { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .search-result-area { margin-top: 12px; font-size: 14px; display: none; background: #fff; padding: 12px; border-radius: 6px; border: 1px solid var(--border); }
-        .search-item-row { padding: 8px 0; border-bottom: 1px solid #f3f0ea; }
+        .search-item-row { padding: 12px 0; border-bottom: 1px solid #f3f0ea; }
         .search-item-row:last-child { border-bottom: none; }
+        .btn-edit-order { background: var(--accent); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 6px; }
+        
+        /* 💡 編輯狀態提示條 */
+        #edit-mode-alert { display: none; background: #fee2e2; border: 1px solid #f87171; color: #991b1b; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
+        .btn-cancel-edit { background: #94a3b8; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 10px; }
 
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--primary); }
@@ -71,13 +76,19 @@
             • 備註：此表單所有品項皆為<b>「整顆 (Loaf)」</b>。
         </div>
 
+        <!-- 🔍 團員訂單自主查詢/修改區塊 -->
         <div class="search-box">
-            <h2>🔍 忘記訂了什麼？輸入電話號碼快速查詢</h2>
+            <h2>🔍 查詢/修改訂單：輸入電話號碼</h2>
             <div class="search-input-group">
                 <input type="text" id="query-phone" class="form-control" placeholder="請輸入您填單時的電話或分機">
                 <button class="btn-search" onclick="searchMyOrder()">查詢</button>
             </div>
             <div id="search-result" class="search-result-area"></div>
+        </div>
+
+        <!-- 💡 編輯模式狀態提示列 -->
+        <div id="edit-mode-alert">
+            ⚠️ 正在修改原本的訂單... <button class="btn-cancel-edit" onclick="cancelEditMode()">取消修改</button>
         </div>
 
         <div class="form-group">
@@ -93,155 +104,17 @@
         <div class="form-group">
             <label>🍞 選擇歐包口味與數量</label>
             
-            <div class="menu-item" data-id="country">
-                <div class="item-info">
-                    <h3>鄉村 Country Sourdough</h3>
-                    <p>經典純粹的招牌酸麵包風味</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 280</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('country', -1)">-</button>
-                        <span id="qty-country" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('country', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="farmer">
-                <div class="item-info">
-                    <h3>農夫 Farmer’s Choice</h3>
-                    <p>職人推薦，獨特麥香與Q彈口感</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 280</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('farmer', -1)">-</button>
-                        <span id="qty-farmer" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('farmer', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="walnut">
-                <div class="item-info">
-                    <h3>核桃 Walnut</h3>
-                    <p>豐富核桃堅果香氣與酸種完美融合</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 300</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('walnut', -1)">-</button>
-                        <span id="qty-walnut" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('walnut', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="baguette">
-                <div class="item-info">
-                    <h3>酸種法棍 Baguette au Levain</h3>
-                    <p>傳統法棍外皮酥脆，內裡富含酸種迷人風味</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 140</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('baguette', -1)">-</button>
-                        <span id="qty-baguette" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('baguette', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="olive">
-                <div class="item-info">
-                    <h3>普羅旺斯橄欖 Olive with Herbes de Provence</h3>
-                    <p>濃郁地中海香草與鹹香橄欖風味</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 300</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('olive', -1)">-</button>
-                        <span id="qty-olive" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('olive', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="jalapeno">
-                <div class="item-info">
-                    <h3>辣椒起司 Jalapeño & Cheddar</h3>
-                    <p>微辣墨西哥椒與切達起司的絕妙美味</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 300</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('jalapeno', -1)">-</button>
-                        <span id="qty-jalapeno" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('jalapeno', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="chocolate">
-                <div class="item-info">
-                    <h3>巧克力香橙 Chocolate with Candied Orange</h3>
-                    <p>苦甜巧克力伴隨蜜漬香橙皮的優雅層次</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 300</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('chocolate', -1)">-</button>
-                        <span id="qty-chocolate" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('chocolate', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="cranberry">
-                <div class="item-info">
-                    <h3>胡桃蔓越莓 Cranberry & Pecan</h3>
-                    <p>酸甜蔓越莓果乾與脆口胡桃</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 300</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('cranberry', -1)">-</button>
-                        <span id="qty-cranberry" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('cranberry', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="edamame">
-                <div class="item-info">
-                    <h3>毛豆乾酪 Edamame & Grana Padano</h3>
-                    <p>鮮美毛豆仁與頂級帕達諾乾酪交織</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 320</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('edamame', -1)">-</button>
-                        <span id="qty-edamame" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('edamame', 1)">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-item" data-id="napoli">
-                <div class="item-info">
-                    <h3>拿坡里 Pane di Napoli</h3>
-                    <p>充滿南義風情的獨特風味經典呈現</p>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="item-price">NT$ 350</span>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="changeQty('napoli', -1)">-</button>
-                        <span id="qty-napoli" class="qty-val">0</span>
-                        <button class="qty-btn" onclick="changeQty('napoli', 1)">+</button>
-                    </div>
-                </div>
-            </div>
+            <!-- 品項列表（保持原樣） -->
+            <div class="menu-item" data-id="country"><div class="item-info"><h3>鄉村 Country Sourdough</h3><p>經典純粹的招牌酸麵包風味</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 280</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('country', -1)">-</button><span id="qty-country" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('country', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="farmer"><div class="item-info"><h3>農夫 Farmer’s Choice</h3><p>職人推薦，獨特麥香與Q彈口感</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 280</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('farmer', -1)">-</button><span id="qty-farmer" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('farmer', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="walnut"><div class="item-info"><h3>核桃 Walnut</h3><p>豐富核桃堅果香氣與酸種完美融合</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 300</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('walnut', -1)">-</button><span id="qty-walnut" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('walnut', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="baguette"><div class="item-info"><h3>酸種法棍 Baguette au Levain</h3><p>傳統法棍外皮酥脆，內裡富含酸種迷人風味</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 140</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('baguette', -1)">-</button><span id="qty-baguette" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('baguette', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="olive"><div class="item-info"><h3>普羅旺斯橄欖 Olive with Herbes de Provence</h3><p>濃郁地中海香草與鹹香橄欖風味</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 300</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('olive', -1)">-</button><span id="qty-olive" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('olive', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="jalapeno"><div class="item-info"><h3>辣椒起司 Jalapeño & Cheddar</h3><p>微辣墨西哥椒與切達起司的絕妙美味</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 300</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('jalapeno', -1)">-</button><span id="qty-jalapeno" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('jalapeno', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="chocolate"><div class="item-info"><h3>巧克力香橙 Chocolate with Candied Orange</h3><p>苦甜巧克力伴隨蜜漬香橙皮的優雅層次</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 300</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('chocolate', -1)">-</button><span id="qty-chocolate" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('chocolate', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="cranberry"><div class="item-info"><h3>胡桃蔓越莓 Cranberry & Pecan</h3><p>酸甜蔓越莓果乾與脆口胡桃</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 300</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('cranberry', -1)">-</button><span id="qty-cranberry" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('cranberry', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="edamame"><div class="item-info"><h3>毛豆乾酪 Edamame & Grana Padano</h3><p>鮮美毛豆仁與頂級帕達諾乾酪交織</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 320</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('edamame', -1)">-</button><span id="qty-edamame" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('edamame', 1)">+</button></div></div></div>
+            <div class="menu-item" data-id="napoli"><div class="item-info"><h3>拿坡里 Pane di Napoli</h3><p>充滿南義風情的獨特風味經典呈現</p></div><div style="display: flex; align-items: center;"><span class="item-price">NT$ 350</span><div class="quantity-control"><button class="qty-btn" onclick="changeQty('napoli', -1)">-</button><span id="qty-napoli" class="qty-val">0</span><button class="qty-btn" onclick="changeQty('napoli', 1)">+</button></div></div></div>
         </div>
 
         <div class="form-group">
@@ -268,30 +141,23 @@
             總計金額： NT$ <span id="total-amount">0</span> 元
         </div>
 
-        <button class="btn-submit" onclick="submitOrder()">確認送出訂單（並複製 LINE 點單格式）</button>
+        <button id="submit-btn" class="btn-submit" onclick="submitOrder()">確認送出訂單（並複製 LINE 點單格式）</button>
     </div>
 </div>
 
 <script>
     const FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
 
-    const orderData = {
-        country: 0, farmer: 0, walnut: 0, baguette: 0, olive: 0, jalapeno: 0, chocolate: 0, cranberry: 0, edamame: 0, napoli: 0
-    };
-    const prices = {
-        country: 280, farmer: 280, walnut: 300, baguette: 140, olive: 300, jalapeno: 300, chocolate: 300, cranberry: 300, edamame: 320, napoli: 350
-    };
+    // 全域變數，紀錄目前是否處於「修改舊訂單狀態」
+    let currentEditOrderId = null; 
+    let globalOrdersCache = {}; 
+
+    let orderData = { country: 0, farmer: 0, walnut: 0, baguette: 0, olive: 0, jalapeno: 0, chocolate: 0, cranberry: 0, edamame: 0, napoli: 0 };
+    const prices = { country: 280, farmer: 280, walnut: 300, baguette: 140, olive: 300, jalapeno: 300, chocolate: 300, cranberry: 300, edamame: 320, napoli: 350 };
     const names = {
-        country: "鄉村 Country Sourdough",
-        farmer: "農夫 Farmer’s Choice",
-        walnut: "核桃 Walnut",
-        baguette: "酸種法棍 Baguette au Levain",
-        olive: "普羅旺斯橄欖 Olive",
-        jalapeno: "辣椒起司 Jalapeño & Cheddar",
-        chocolate: "巧克力香橙 Chocolate",
-        cranberry: "胡桃蔓越莓 Cranberry & Pecan",
-        edamame: "毛豆乾酪 Edamame & Grana Padano",
-        napoli: "拿坡里 Pane di Napoli"
+        country: "鄉村 Country Sourdough", farmer: "農夫 Farmer’s Choice", walnut: "核桃 Walnut", baguette: "酸種法棍 Baguette au Levain",
+        olive: "普羅旺斯橄欖 Olive", jalapeno: "辣椒起司 Jalapeño & Cheddar", chocolate: "巧克力香橙 Chocolate",
+        cranberry: "胡桃蔓越莓 Cranberry & Pecan", edamame: "毛豆乾酪 Edamame & Grana Padano", napoli: "拿坡里 Pane di Napoli"
     };
 
     function changeQty(id, delta) {
@@ -306,23 +172,19 @@
 
     function calculateTotal() {
         let total = 0;
-        for(let key in orderData) {
-            total += orderData[key] * prices[key];
-        }
+        for(let key in orderData) { total += orderData[key] * prices[key]; }
         document.getElementById('total-amount').innerText = total;
         return total;
     }
 
     function togglePayFields(method) {
-        const field = document.getElementById('transfer-info');
-        field.style.display = (method === '轉帳') ? 'block' : 'none';
+        document.getElementById('transfer-info').style.display = (method === '轉帳') ? 'block' : 'none';
     }
 
-    // 🔨 新增：團員自主查詢訂單 JavaScript 邏輯
+    // 🔍 查詢訂單邏輯
     function searchMyOrder() {
         const inputPhone = document.getElementById('query-phone').value.trim();
         const resultArea = document.getElementById('search-result');
-        
         if (!inputPhone) { alert('請輸入您的聯絡電話或分機以供對帳查詢！'); return; }
         
         resultArea.style.display = 'block';
@@ -335,38 +197,105 @@
                 resultArea.innerHTML = '<span style="color:var(--accent);">📭 目前雲端資料庫內尚無任何訂單紀錄。</span>';
                 return;
             }
+            globalOrdersCache = data; // 快取下來供後續修改使用
 
-            let foundOrders = [];
+            let html = `<div style="font-weight:bold; margin-bottom:8px; color:var(--primary);">✨ 幫您找到以下填單紀錄：</div>`;
+            let count = 0;
+
             for (let id in data) {
-                // 精確或部分匹配電話（不分格式空格）
-                if (data[id].phone && data[id].phone.replace(/[^0-9]/g, '').includes(inputPhone.replace(/[^0-9]/g, ''))) {
-                    foundOrders.push(data[id]);
-                }
-            }
-
-            if (foundOrders.length === 0) {
-                resultArea.innerHTML = `<span style="color:red;">❌ 找不到與「${inputPhone}」相關的訂單，請確認號碼是否輸入正確。</span>`;
-            } else {
-                let html = `<div style="font-weight:bold; margin-bottom:8px; color:var(--primary);">✨ 幫您找到以下填單紀錄：</div>`;
-                foundOrders.forEach(ord => {
+                let ord = data[id];
+                if (ord.phone && ord.phone.replace(/[^0-9]/g, '').includes(inputPhone.replace(/[^0-9]/g, ''))) {
+                    count++;
                     const statusColor = ord.status === '已確認' ? 'var(--success)' : 'red';
+                    
+                    // 如果主揪已經確認對帳，就不開放修改按鈕，避免帳目對不上
+                    let editBtnHtml = '';
+                    if (ord.status === '已確認') {
+                        editBtnHtml = `<br><span style="color:var(--text-muted); font-size:12px;">💡 此訂單主揪已核對確認，如需修改請直接私訊主揪。</span>`;
+                    } else {
+                        editBtnHtml = `<br><button class="btn-edit-order" onclick="loadOrderToForm('${id}')">✏️ 修改此筆訂單</button>`;
+                    }
+
                     html += `
                         <div class="search-item-row">
                             🟢 <b>姓名：</b>${ord.name} <br>
                             🍞 <b>明細：</b><span style="color:#555;">${ord.items}</span><br>
                             💰 <b>金額：</b>NT$ ${ord.total} 元 (${ord.payment})<br>
                             📌 <b>對帳狀態：</b><b style="color:${statusColor};">${ord.status || '未核對'}</b>
+                            ${editBtnHtml}
                         </div>
                     `;
-                });
+                }
+            }
+
+            if (count === 0) {
+                resultArea.innerHTML = `<span style="color:red;">❌ 找不到與「${inputPhone}」相關的訂單，請確認號碼是否輸入正確。</span>`;
+            } else {
                 resultArea.innerHTML = html;
             }
         })
-        .catch(() => {
-            resultArea.innerHTML = '❌ 查詢時連線出錯，請稍後再試。';
-        });
+        .catch(() => { resultArea.innerHTML = '❌ 查詢時連線出錯，請稍後再試。'; });
     }
 
+    // ✏️ 將被選中的訂單帶入下方的輸入表單中
+    function loadOrderToForm(id) {
+        const ord = globalOrdersCache[id];
+        if (!ord) return;
+
+        currentEditOrderId = id; // 設定目前為編輯模式，並記錄原單的 ID
+        
+        // 1. 顯示修改狀態列、更換送出按鈕的文字
+        document.getElementById('edit-mode-alert').style.display = 'block';
+        document.getElementById('submit-btn').innerText = '💾 確認更新訂單（覆蓋原訂單）';
+        document.getElementById('submit-btn').style.background = 'var(--accent)';
+
+        // 2. 填入姓名與電話
+        document.getElementById('username').value = ord.name;
+        document.getElementById('phone').value = ord.phone;
+
+        // 3. 恢復當初買的品項數量
+        for (let key in orderData) {
+            let qty = (ord.itemsObj && ord.itemsObj[key]) ? ord.itemsObj[key] : 0;
+            orderData[key] = qty;
+            document.getElementById('qty-' + key).innerText = qty;
+        }
+        calculateTotal();
+
+        // 4. 恢復付款方式與後五碼
+        if (ord.payment === '現金') {
+            document.querySelector('input[name="payment"][value="現金"]').checked = true;
+            togglePayFields('現金');
+        } else {
+            document.querySelector('input[name="payment"][value="轉帳"]').checked = true;
+            togglePayFields('轉帳');
+            document.getElementById('paycode').value = (ord.paycode && ord.paycode !== '面交現付') ? ord.paycode : '';
+        }
+
+        // 畫面自動平滑捲動到表單區
+        document.getElementById('username').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 取消編輯模式，清空表單
+    function cancelEditMode() {
+        currentEditOrderId = null;
+        document.getElementById('edit-mode-alert').style.display = 'none';
+        document.getElementById('submit-btn').innerText = '確認送出訂單（並複製 LINE 點單格式）';
+        document.getElementById('submit-btn').style.background = 'var(--success)';
+        clearForm();
+    }
+
+    function clearForm() {
+        document.getElementById('username').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('paycode').value = '';
+        for(let key in orderData) {
+            orderData[key] = 0;
+            document.getElementById('qty-' + key).innerText = 0;
+        }
+        calculateTotal();
+    }
+
+    // 送出或更新訂單
     function submitOrder() {
         const name = document.getElementById('username').value.trim();
         const phone = document.getElementById('phone').value.trim();
@@ -387,9 +316,11 @@
             }
         }
 
-        const orderId = Date.now();
-        const newOrder = {
-            id: orderId,
+        // 如果是編輯模式，就用舊的 ID 包裹它，如果是新單就用時間戳記生成新 ID
+        const orderId = currentEditOrderId ? currentEditOrderId : Date.now();
+        
+        const orderPayload = {
+            id: Number(orderId),
             name: name,
             phone: phone,
             items: itemsSummary.join(', '),
@@ -397,30 +328,26 @@
             total: total,
             payment: payment,
             paycode: payment === '轉帳' ? paycode : '面交現付',
-            status: '未核對'
+            status: '未核對' // 重新修改後，狀態會被重設回未核對讓主揪重看
         };
 
         fetch(`${FIREBASE_URL}/orders/${orderId}.json`, {
             method: 'PUT',
-            body: JSON.stringify(newOrder)
+            body: JSON.stringify(orderPayload)
         })
         .then(response => {
             if(!response.ok) throw new Error();
             
-            let lineText = `【CELEBREAD 團購點單確認】\n👤 跟團姓名：${name}\n📞 聯絡電話：${phone}\n🍞 訂購明細：\n   ${itemsSummary.join('\n   ')}\n💳 付款方式：${payment}\n`;
+            let isEditText = currentEditOrderId ? '【修改變更】' : '';
+            let lineText = `${isEditText}【CELEBREAD 團購點單確認】\n👤 跟團姓名：${name}\n📞 聯絡電話：${phone}\n🍞 訂購明細：\n   ${itemsSummary.join('\n   ')}\n💳 付款方式：${payment}\n`;
             if(payment === '轉帳') lineText += `🔢 後五碼：${paycode}\n`;
             lineText += `💰 總金額：NT$ ${total} 元\n------------------------`;
 
             navigator.clipboard.writeText(lineText).then(() => {
-                alert('🎉 訂單已成功送出並同步至雲端！已自動複製 LINE 格式，您可以貼回群組告知主揪！');
-                document.getElementById('username').value = '';
-                document.getElementById('phone').value = '';
-                document.getElementById('paycode').value = '';
-                for(let key in orderData) {
-                    orderData[key] = 0;
-                    document.getElementById('qty-' + key).innerText = 0;
-                }
-                calculateTotal();
+                alert(currentEditOrderId ? '🎉 您的訂單已在雲端成功更新！LINE格式已複製，您可以重新貼回群組！' : '🎉 訂單已成功送出並同步至雲端！已自動複製 LINE 格式，您可以貼回群組告知主揪！');
+                cancelEditMode(); // 完美收尾：清空暫存與重置表單
+                document.getElementById('search-result').style.display = 'none'; // 隱藏舊的搜尋結果
+                document.getElementById('query-phone').value = '';
             });
         })
         .catch(err => alert('系統連線失敗，請檢查資料庫網址設定！'));
