@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CELEBREAD 團購管理後台</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onerror="handleCDNError()"></script>
     <style>
         :root {
             --bg-color: #f4f6f9;
@@ -78,7 +78,7 @@
             </tr>
         </thead>
         <tbody id="orders-tbody">
-            <tr><td colspan="8" class="empty-msg">🔄 正在連線雲端資料庫載入訂單...</td></tr>
+            <tr><td colspan="8" class="empty-msg" id="loading-msg">🔄 正在連線雲端資料庫載入訂單...</td></tr>
         </tbody>
     </table>
 
@@ -88,8 +88,20 @@
 </div>
 
 <script>
-    const FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
-    const ADMIN_PASSWORD = "980806"; // 引入與前台一致的管理密碼
+    // 🔍 請確認此處網址是否正確
+    let FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
+    const ADMIN_PASSWORD = "980806"; 
+    
+    // 防呆：自動將結尾多打的斜線 / 刪除
+    if (FIREBASE_URL.endsWith('/')) {
+        FIREBASE_URL = FIREBASE_URL.slice(0, -1);
+    }
+
+    let isExcelLibLoaded = true;
+    function handleCDNError() {
+        isExcelLibLoaded = false;
+        alert("⚠️ 偵測到網路阻擋：無法從網路下載 Excel 匯出元件！\n這通常是因為公司網路封鎖了 cdn.jsdelivr.net。\n\n💡 提示：網頁依然會嘗試讀取雲端訂單，但稍後將無法點擊「匯出 Excel」。若需匯出，請切換至個人手機熱點重新整理網頁即可。");
+    }
     
     const itemNamesMap = {
         country: "鄉村 Country Sourdough",
@@ -109,10 +121,16 @@
     window.onload = function() { loadOrdersFromFirebase(); };
 
     function loadOrdersFromFirebase() {
+        const tbody = document.getElementById('orders-tbody');
+        
         fetch(`${FIREBASE_URL}/orders.json`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP 錯誤！狀態碼: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            const tbody = document.getElementById('orders-tbody');
             tbody.innerHTML = '';
             rawOrdersList = [];
 
@@ -149,7 +167,7 @@
                     <td>${order.phone}</td>
                     <td style="color:#555; font-size:13px;">${order.items}</td>
                     <td>${order.payment}</td>
-                    <td><span style="font-family:monospace; background:#f0f0f0; padding:2px 6px; border-radius:4px;">${order.paycode}</span></td>
+                    <td><span style="font-family:monospace; background:#f0f0f0; padding:2px 6px; border-radius:4px;">${order.paycode || '無'}</span></td>
                     <td style="font-weight:bold; color:var(--accent);">NT$ ${order.total}</td>
                     <td><span class="status-badge ${badgeClass}" onclick="toggleStatus('${order.id}', '${currentStatus}')">${currentStatus}</span></td>
                 `;
@@ -158,7 +176,8 @@
             renderDashboardSummary(aggregateCounts, totalRevenue);
         })
         .catch(err => {
-            document.getElementById('orders-tbody').innerHTML = '<tr><td colspan="8" class="empty-msg" style="color:var(--danger);">❌ 連線失敗！</td></tr>';
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="8" class="empty-msg" style="color:var(--danger); font-weight:bold;">❌ 連線失敗！原因：${err.message}<br><span style="font-size:12px;color:#888;">請檢查 (1) 網路是否連線 (2) Firebase URL 是否正確 (3) 資料庫 Rules 是否被關閉。</span></td></tr>`;
         });
     }
 
@@ -193,6 +212,10 @@
     }
 
     function exportToExcelPro() {
+        if (!isExcelLibLoaded || typeof XLSX === 'undefined') {
+            alert("❌ 無法匯出：Excel 元件未成功載入（因公司網路封鎖 CDN）。\n請更換為非公司網路（如手機熱點）重新整理網頁再試一次！");
+            return;
+        }
         if (rawOrdersList.length === 0) { alert('目前沒有任何訂單數據可以匯出！'); return; }
 
         // --- 工作表 1: 店家下單總量統計 ---
@@ -244,3 +267,40 @@
                 order.payment,
                 order.paycode,
                 io.country || 0, io.farmer || 0, io.walnut || 0, io.baguette || 0, io.olive || 0,
+                io.jalapeno || 0, io.chocolate || 0, io.cranberry || 0, io.edamame || 0, io.napoli || 0,
+                order.total,
+                order.status || '未核對'
+            ];
+            sheet2Data.push(row);
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
+        XLSX.utils.book_append_sheet(wb, ws1, "1.店家下單總量統計");
+
+        const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
+        XLSX.utils.book_append_sheet(wb, ws2, "2.團員訂單明細總表");
+
+        XLSX.writeFile(wb, `CELEBREAD_完美團購整合報表_${Date.now()}.xlsx`);
+    }
+
+    function clearAllData() {
+        const pwd = prompt('🔑 本操作將刪除雲端所有訂單！\n請輸入【主揪管理密碼】以進行身份驗證：');
+        if (pwd === null) return; 
+        
+        if (pwd === ADMIN_PASSWORD) {
+            if (confirm('🚨 最後確認：您確定已經將本團的 Excel 報表匯出存檔，並要將資料庫歸零了嗎？')) {
+                fetch(`${FIREBASE_URL}/orders.json`, { method: 'DELETE' })
+                .then(() => { 
+                    alert('🗑️ 雲端訂單數據已成功歸零清空！'); 
+                    loadOrdersFromFirebase(); 
+                });
+            }
+        } else {
+            alert('❌ 密碼錯誤，拒絕執行清空指令！');
+        }
+    }
+</script>
+
+</body>
+</html>
