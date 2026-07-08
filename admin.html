@@ -89,6 +89,7 @@
 
 <script>
     const FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
+    const ADMIN_PASSWORD = "980806"; // 引入與前台一致的管理密碼
     
     const itemNamesMap = {
         country: "鄉村 Country Sourdough",
@@ -137,7 +138,7 @@
                     }
                 }
 
-                const dateStr = new Date(order.id).toLocaleString('zh-TW', { hour12: false });
+                const dateStr = new Date(Number(order.id)).toLocaleString('zh-TW', { hour12: false });
                 const badgeClass = order.status === '已確認' ? 'status-checked' : 'status-uncheck';
                 const currentStatus = order.status || '未核對';
 
@@ -191,7 +192,6 @@
         .then(() => loadOrdersFromFirebase());
     }
 
-    // 🍏 進階專業版 Excel 匯出邏輯（多工作表 + 獨立數量欄位 + 自動計算）
     function exportToExcelPro() {
         if (rawOrdersList.length === 0) { alert('目前沒有任何訂單數據可以匯出！'); return; }
 
@@ -227,7 +227,7 @@
         sheet1Data.push(["💰 全團預估銷售總金額", "NT$ " + totalRevenueSum.toLocaleString() + " 元"]);
 
 
-        // --- 工作表 2: 團員訂單明細總表 (展開獨立欄位) ---
+        // --- 工作表 2: 團員訂單明細總表 ---
         const sheet2Header = [
             "填單時間", "團員姓名", "聯絡電話/分機", "付款方式", "帳號後五碼", 
             "鄉村", "農夫", "核桃", "法棍", "普羅旺斯橄欖", "辣椒起司", "巧克力香橙", "胡桃蔓越莓", "毛豆乾酪", "拿坡里",
@@ -238,42 +238,9 @@
         rawOrdersList.forEach(order => {
             const io = order.itemsObj || {};
             const row = [
-                new Date(order.id).toLocaleString('zh-TW', { hour12: false }),
+                new Date(Number(order.id)).toLocaleString('zh-TW', { hour12: false }),
                 order.name,
                 order.phone,
                 order.payment,
                 order.paycode,
-                // 精確填入每款麵包數量，沒買就填 0 或是留白（這裡填數量，方便後續在 Excel 裡拉加總）
                 io.country || 0, io.farmer || 0, io.walnut || 0, io.baguette || 0, io.olive || 0,
-                io.jalapeno || 0, io.chocolate || 0, io.cranberry || 0, io.edamame || 0, io.napoli || 0,
-                order.total,
-                order.status || '未核對'
-            ];
-            sheet2Data.push(row);
-        });
-
-        // 建立活頁簿
-        const wb = XLSX.utils.book_new();
-
-        // 寫入工作表 1
-        const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
-        XLSX.utils.book_append_sheet(wb, ws1, "1.店家下單總量統計");
-
-        // 寫入工作表 2
-        const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
-        XLSX.utils.book_append_sheet(wb, ws2, "2.團員訂單明細總表");
-
-        // 執行下載
-        XLSX.writeFile(wb, `CELEBREAD_完美團購整合報表_${Date.now()}.xlsx`);
-    }
-
-    function clearAllData() {
-        if (confirm('🚨 警告：此操作將會刪除雲端資料庫內【所有的團員訂單】！\n\n您確定已經將本團的 Excel 報表匯出存檔了嗎？')) {
-            fetch(`${FIREBASE_URL}/orders.json`, { method: 'DELETE' })
-            .then(() => { alert('🗑️ 雲端訂單數據已成功歸零清空！'); loadOrdersFromFirebase(); });
-        }
-    }
-</script>
-
-</body>
-</html>
