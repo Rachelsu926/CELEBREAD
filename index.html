@@ -65,7 +65,7 @@
 
 <div class="container">
     <header>
-        <h1>🥖 CELEBREAD  職人歐式酸麵包團購表單 🥐</h1>
+        <h1>🥖 CELEBREAD 職人歐包團購表單 🥐</h1>
         <p>純手工揉製、風味濃郁的高質感歐式酸麵包特開此團！</p>
         <div class="header-hint">
             🛒 <b>口味選擇障礙看這裡：</b> 建議直接點進 <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">✨ CELEBREAD 官方 IG 專頁 ↗</a>，瀏覽超厲害的剖面大氣孔與配料照片，挑好命定款再填單吧！
@@ -78,6 +78,7 @@
             • 結單時間：2026/7/13 下午3:00，滿額即提前結單，請儘速填寫。<br>
             • 取貨地點：辦公室自取。<br>
             • 備註：此表單所有品項皆為<b>「整顆 (Loaf)」</b>。<br>
+            👉 <b>官方網站連結：</b> <a href="https://www.instagram.com/celebread.acs/" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">點此進入 CELEBREAD 官方 IG 瀏覽美照 ↗</a>
         </div>
 
         <div class="search-box">
@@ -252,6 +253,7 @@
         if (!ord) return;
 
         const dbPhonePure = ord.phone ? ord.phone.replace(/[^0-9]/g, '') : '';
+        // 這裡已經徹底洗白、移除所有測試提示字囉！
         const userInputCode = prompt(`【安全身份核對】\n為了防範誤改他人訂單，請輸入此筆訂單的「電話後三碼」或「分機號碼」：`);
         
         if (!userInputCode || userInputCode.trim() === "") {
@@ -268,23 +270,20 @@
         }
     }
 
+    // 之後的其餘函式皆維持不變...
     function loadOrderToForm(id, ord) {
         currentEditOrderId = id; 
-        
         document.getElementById('edit-mode-alert').style.display = 'block';
         document.getElementById('submit-btn').innerText = '💾 確認更新訂單（覆蓋原訂單）';
         document.getElementById('submit-btn').style.background = 'var(--accent)';
-
         document.getElementById('username').value = ord.name;
         document.getElementById('phone').value = ord.phone;
-
         for (let key in orderData) {
             let qty = (ord.itemsObj && ord.itemsObj[key]) ? ord.itemsObj[key] : 0;
             orderData[key] = qty;
             document.getElementById('qty-' + key).innerText = qty;
         }
         calculateTotal();
-
         if (ord.payment === '現金') {
             document.querySelector('input[name="payment"][value="現金"]').checked = true;
             togglePayFields('現金');
@@ -293,7 +292,6 @@
             togglePayFields('轉帳');
             document.getElementById('paycode').value = (ord.paycode && ord.paycode !== '面交現付') ? ord.paycode : '';
         }
-
         document.getElementById('username').scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -356,7 +354,6 @@
         })
         .then(response => {
             if(!response.ok) throw new Error();
-            
             let isEditText = currentEditOrderId ? '【修改變更】' : '';
             let lineText = `${isEditText}【CELEBREAD 團購點單確認】\n👤 跟團姓名：${name}\n📞 聯絡電話：${phone}\n🍞 訂購明細：\n   ${itemsSummary.join('\n   ')}\n💳 付款方式：${payment}\n`;
             if(payment === '轉帳') lineText += `🔢 後五碼：${paycode}\n`;
