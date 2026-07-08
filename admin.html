@@ -24,11 +24,10 @@
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--primary); padding-bottom: 15px; }
         header h1 { color: var(--primary); font-size: 26px; }
         
-        /* 🥊 新增：總量統計儀表板樣式 */
         .stats-dashboard { background: var(--primary-light); border: 1px solid var(--primary); border-radius: 8px; padding: 20px; margin-bottom: 25px; }
         .stats-dashboard h2 { font-size: 18px; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-        .stats-card { background: #fff; padding: 12px; border-radius: 6px; border: 1px solid var(--border); text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .stats-card { background: #fff; padding: 12px; border-radius: 6px; border: 1px solid var(--border); text-align: center; }
         .stats-card .item-name { font-size: 13px; color: #666; font-weight: bold; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .stats-card .item-count { font-size: 20px; font-weight: bold; color: var(--accent); }
         .stats-total-money { grid-column: 1 / -1; background: var(--primary); color: #fff; padding: 12px; border-radius: 6px; font-size: 18px; font-weight: bold; text-align: right; margin-top: 8px; }
@@ -43,13 +42,11 @@
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
         th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 14px; }
         th { background-color: #eaeaea; color: #444; font-weight: bold; }
-        tr:hover { background-color: #f9f9f9; }
         
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; user-select: none; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .status-uncheck { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
         .status-checked { background: #dcfce7; color: #22c55e; border: 1px solid #86efac; }
-        
-        .empty-msg { text-align: center; padding: 4px 0; color: #888; font-style: italic; }
+        .empty-msg { text-align: center; padding: 20px 0; color: #888; font-style: italic; }
     </style>
 </head>
 <body>
@@ -58,14 +55,13 @@
     <header>
         <h1>📊 CELEBREAD 團購訂單管理後台</h1>
         <div class="btn-group">
-            <button class="btn btn-success" onclick="exportToExcel()">🍏 匯出 Excel 報表</button>
+            <button class="btn btn-success" onclick="exportToExcelPro()">🍏 匯出完美排版 Excel 報表</button>
         </div>
     </header>
 
     <div class="stats-dashboard">
         <h2>🥖 當前開團品項總量統計表 (店家下單專用)</h2>
-        <div class="stats-grid" id="stats-grid-container">
-            </div>
+        <div class="stats-grid" id="stats-grid-container"></div>
     </div>
 
     <table id="orders-table">
@@ -74,7 +70,7 @@
                 <th>訂單時間</th>
                 <th>跟團姓名</th>
                 <th>聯絡電話#分機</th>
-                <th>訂購明細</th>
+                <th>訂購明細總覽</th>
                 <th>付款方式</th>
                 <th>後五碼 / 備註</th>
                 <th>應付金額</th>
@@ -94,7 +90,6 @@
 <script>
     const FIREBASE_URL = "https://celebread-groupbuy-default-rtdb.firebaseio.com";
     
-    // 定義所有麵包代號與顯示名稱的對照表
     const itemNamesMap = {
         country: "鄉村 Country Sourdough",
         farmer: "農夫 Farmer’s Choice",
@@ -110,10 +105,7 @@
 
     let rawOrdersList = [];
 
-    // 網頁開啟時自動載入資料
-    window.onload = function() {
-        loadOrdersFromFirebase();
-    };
+    window.onload = function() { loadOrdersFromFirebase(); };
 
     function loadOrdersFromFirebase() {
         fetch(`${FIREBASE_URL}/orders.json`)
@@ -125,21 +117,18 @@
 
             if (!data) {
                 tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">📭 目前尚無任何團員填單。</td></tr>';
-                renderDashboardSummary({}); // 無資料時清空統計圖表
+                renderDashboardSummary({});
                 return;
             }
 
-            // 用來加總各品項數量的累計物件
             let aggregateCounts = { country: 0, farmer: 0, walnut: 0, baguette: 0, olive: 0, jalapeno: 0, chocolate: 0, cranberry: 0, edamame: 0, napoli: 0 };
             let totalRevenue = 0;
 
-            // 逐筆解析訂單並渲染至表格
             for (let id in data) {
                 const order = data[id];
                 rawOrdersList.push(order);
                 totalRevenue += (order.total || 0);
 
-                // 累加麵包個數
                 if (order.itemsObj) {
                     for (let key in order.itemsObj) {
                         if (aggregateCounts.hasOwnProperty(key)) {
@@ -165,20 +154,16 @@
                 `;
                 tbody.appendChild(tr);
             }
-
-            // 更新上方的統計儀表板
             renderDashboardSummary(aggregateCounts, totalRevenue);
         })
         .catch(err => {
-            document.getElementById('orders-tbody').innerHTML = '<tr><td colspan="8" class="empty-msg" style="color:var(--danger);">❌ 連線失敗，請確認 Firebase 設定！</td></tr>';
+            document.getElementById('orders-tbody').innerHTML = '<tr><td colspan="8" class="empty-msg" style="color:var(--danger);">❌ 連線失敗！</td></tr>';
         });
     }
 
-    // 🔨 渲染總量統計區塊
     function renderDashboardSummary(counts, totalMoney = 0) {
         const container = document.getElementById('stats-grid-container');
         container.innerHTML = '';
-
         let hasAnyItems = false;
         for (let key in itemNamesMap) {
             const count = counts[key] || 0;
@@ -186,72 +171,106 @@
                 hasAnyItems = true;
                 const card = document.createElement('div');
                 card.className = 'stats-card';
-                card.innerHTML = `
-                    <div class="item-name" title="${itemNamesMap[key]}">${itemNamesMap[key]}</div>
-                    <div class="item-count">${count} 顆</div>
-                `;
+                card.innerHTML = `<div class="item-name">${itemNamesMap[key]}</div><div class="item-count">${count} 顆</div>`;
                 container.appendChild(card);
             }
         }
-
         if (!hasAnyItems) {
-            container.innerHTML = '<div style="color:#666; font-style:italic; padding:10px; grid-column:1/-1;">目前暫無品項銷售加總數據。</div>';
+            container.innerHTML = '<div style="color:#666; font-style:italic; padding:10px;">目前暫無品項銷售數據。</div>';
             return;
         }
-
-        // 附加總金額卡片
         const totalBar = document.createElement('div');
         totalBar.className = 'stats-total-money';
         totalBar.innerText = `💰 目前開團累積總金額： NT$ ${totalMoney.toLocaleString()} 元`;
         container.appendChild(totalBar);
     }
 
-    // 切換未核對/已確認狀態
     function toggleStatus(orderId, currentStatus) {
         const nextStatus = currentStatus === '已確認' ? '未核對' : '已確認';
-        fetch(`${FIREBASE_URL}/orders/${orderId}/status.json`, {
-            method: 'PUT',
-            body: JSON.stringify(nextStatus)
-        })
+        fetch(`${FIREBASE_URL}/orders/${orderId}/status.json`, { method: 'PUT', body: JSON.stringify(nextStatus) })
         .then(() => loadOrdersFromFirebase());
     }
 
-    // 一鍵匯出 Excel 功能
-    function exportToExcel() {
+    // 🍏 進階專業版 Excel 匯出邏輯（多工作表 + 獨立數量欄位 + 自動計算）
+    function exportToExcelPro() {
         if (rawOrdersList.length === 0) { alert('目前沒有任何訂單數據可以匯出！'); return; }
-        
-        const worksheetData = [
-            ["訂單唯一編號", "填單時間", "團員姓名", "聯絡電話/分機", "訂購細目總覽", "付款方式", "帳號後五碼/面交", "應付總金額", "主揪對帳狀態"]
+
+        // --- 工作表 1: 店家下單總量統計 ---
+        const sheet1Data = [
+            ["🥖 CELEBREAD 歐包團購 - 店家備貨總量下單表"],
+            [],
+            ["麵包品項名稱", "開團預訂總數量 (顆)"]
         ];
+        
+        let totalQtySum = 0;
+        let totalRevenueSum = 0;
+        let itemTotals = { country: 0, farmer: 0, walnut: 0, baguette: 0, olive: 0, jalapeno: 0, chocolate: 0, cranberry: 0, edamame: 0, napoli: 0 };
 
         rawOrdersList.forEach(order => {
-            worksheetData.push([
-                order.id,
+            totalRevenueSum += (order.total || 0);
+            if (order.itemsObj) {
+                for (let key in itemTotals) {
+                    itemTotals[key] += parseInt(order.itemsObj[key] || 0);
+                }
+            }
+        });
+
+        for (let key in itemNamesMap) {
+            let count = itemTotals[key];
+            if (count > 0) {
+                sheet1Data.push([itemNamesMap[key], count]);
+                totalQtySum += count;
+            }
+        }
+        sheet1Data.push([]);
+        sheet1Data.push(["📦 總計全團麵包個數", totalQtySum + " 顆"]);
+        sheet1Data.push(["💰 全團預估銷售總金額", "NT$ " + totalRevenueSum.toLocaleString() + " 元"]);
+
+
+        // --- 工作表 2: 團員訂單明細總表 (展開獨立欄位) ---
+        const sheet2Header = [
+            "填單時間", "團員姓名", "聯絡電話/分機", "付款方式", "帳號後五碼", 
+            "鄉村", "農夫", "核桃", "法棍", "普羅旺斯橄欖", "辣椒起司", "巧克力香橙", "胡桃蔓越莓", "毛豆乾酪", "拿坡里",
+            "應付總金額", "對帳狀態"
+        ];
+        const sheet2Data = [sheet2Header];
+
+        rawOrdersList.forEach(order => {
+            const io = order.itemsObj || {};
+            const row = [
                 new Date(order.id).toLocaleString('zh-TW', { hour12: false }),
                 order.name,
                 order.phone,
-                order.items,
                 order.payment,
                 order.paycode,
+                // 精確填入每款麵包數量，沒買就填 0 或是留白（這裡填數量，方便後續在 Excel 裡拉加總）
+                io.country || 0, io.farmer || 0, io.walnut || 0, io.baguette || 0, io.olive || 0,
+                io.jalapeno || 0, io.chocolate || 0, io.cranberry || 0, io.edamame || 0, io.napoli || 0,
                 order.total,
                 order.status || '未核對'
-            ]);
+            ];
+            sheet2Data.push(row);
         });
 
+        // 建立活頁簿
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-        XLSX.utils.book_append_sheet(wb, ws, "團購訂單總表");
-        XLSX.writeFile(wb, `CELEBREAD_歐包團購明細表_${Date.now()}.xlsx`);
+
+        // 寫入工作表 1
+        const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
+        XLSX.utils.book_append_sheet(wb, ws1, "1.店家下單總量統計");
+
+        // 寫入工作表 2
+        const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
+        XLSX.utils.book_append_sheet(wb, ws2, "2.團員訂單明細總表");
+
+        // 執行下載
+        XLSX.writeFile(wb, `CELEBREAD_完美團購整合報表_${Date.now()}.xlsx`);
     }
 
-    // 清空資料庫
     function clearAllData() {
-        if (confirm('🚨 警告：此操作將會刪除雲端資料庫內【所有的團員訂單】，刪除後無法復原！\n\n您確定已經將本團的 Excel 報表匯出存檔，並要清空資料以準備下一團了嗎？')) {
+        if (confirm('🚨 警告：此操作將會刪除雲端資料庫內【所有的團員訂單】！\n\n您確定已經將本團的 Excel 報表匯出存檔了嗎？')) {
             fetch(`${FIREBASE_URL}/orders.json`, { method: 'DELETE' })
-            .then(() => {
-                alert('🗑️ 雲端訂單數據已成功歸零清空！');
-                loadOrdersFromFirebase();
-            });
+            .then(() => { alert('🗑️ 雲端訂單數據已成功歸零清空！'); loadOrdersFromFirebase(); });
         }
     }
 </script>
